@@ -1,0 +1,108 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
+using Kolpojontro.Reg.Core;
+using Kolpojontro.Reg.Core.ApiResources;
+using Kolpojontro.Reg.Core.Models;
+using Kolpojontro.Reg.Core.Repositories;
+using Kolpojontro.Reg.Persistence;
+using Kolpojontro.Reg.Repositories;
+using Kolpojontro.Reg.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Kolpojontro.Reg
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            //============== Db Context ============
+            services.AddDbContext<ApplicationDbContext>();
+
+            // ============= Add Repositories ==========
+            services.AddScoped<IAwaitingUserRepository, AwaitingUserRepository>();
+
+
+            // ============= Add Services ===========
+            services.AddScoped<IAwaitingUserService, AwaitingUserService>();
+
+            //============== Add Identity ==========
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                    .AddRoles<IdentityRole>()
+                    .AddEntityFrameworkStores<ApplicationDbContext>()
+                    .AddDefaultTokenProviders();
+
+            //======= Add AutoMapper ========
+            var autoMapperConfig = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<AwaitingUserApiResource, AwaitingUser>()
+                    .ForMember(x => x.FirstName, opt => opt.MapFrom(a => a.FirstName))
+                    .ForMember(x => x.LastName, opt => opt.MapFrom(a => a.LastName))
+                    .ForMember(x => x.Gender, opt => opt.MapFrom(a => a.Gender))
+                    .ForMember(x => x.ReasonForJoining, opt => opt.MapFrom(a => a.ReasonForJoining))
+                    .ForMember(x => x.PresentOrganization, opt => opt.MapFrom(a => a.PresentOrganization))
+                    .ForMember(x => x.VolunteeingExperience, opt => opt.MapFrom(a => a.VolunteeingExperience))
+                    .ForMember(x => x.DateOfBirth, opt => opt.MapFrom(a => a.DateOfBirth))
+                    .ForMember(x => x.CityOfResidence, opt => opt.MapFrom(a => a.CityOfResidence))
+                    .ForMember(x => x.CountryOfResidence, opt => opt.MapFrom(a => a.CountryOfResidence))
+                    .ForMember(x => x.Id, opt => opt.Ignore())
+                    .ForMember(x => x.DOB, opt => opt.Ignore())
+                    .ForMember(x => x.Status, opt => opt.Ignore())
+                    .ForMember(x => x.StatusLastUpdatedAt, opt => opt.Ignore());
+            });
+
+            // only during development, validate your mappings; remove it before release
+            autoMapperConfig.AssertConfigurationIsValid();
+
+            var mapper = autoMapperConfig.CreateMapper();
+
+            services.AddSingleton(mapper);
+
+            //======= Add MVC =======
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, 
+                                IHostingEnvironment env,
+                                ApplicationDbContext applicationDbContext)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+
+            // ===== Use Authentication ======
+            app.UseAuthentication();
+            app.UseHttpsRedirection();
+            app.UseMvc();
+
+
+            // ==== Create Db =====
+            applicationDbContext.Database.EnsureCreated();
+        }
+    }
+}
