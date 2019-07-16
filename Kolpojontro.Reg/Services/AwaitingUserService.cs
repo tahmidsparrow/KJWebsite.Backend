@@ -28,12 +28,32 @@ namespace Kolpojontro.Reg.Services
 
             var awaitingUser = _mapper.Map<AwaitingUser>(usermodel);
             awaitingUser.Status = EAwaitingUserStatus.Awaiting.ToString();
-            //awaitingUser.DOB = new DateTime(Convert.ToInt64(awaitingUser.DateOfBirth));
+            awaitingUser.DOB = Convert.ToDateTime(awaitingUser.DateOfBirth);
             awaitingUser.StatusLastUpdatedAt = DateTime.Now;
 
             var response = await _awaitingUserRepository.CreateUserAsync(awaitingUser);
 
             return response;
+        }
+
+        public async Task<List<AwaitingUserApiResource>> GetAwaitingUsers()
+        {
+            var result = await _awaitingUserRepository.GetAwaitingUsers();
+            if(result!= null && result.Count > 0)
+            {
+                List<AwaitingUserApiResource> AwaitingUsersAsResource = new List<AwaitingUserApiResource>();
+                
+                foreach(AwaitingUser user in result)
+                {
+                    
+                    var userToAdd = _mapper.Map<AwaitingUserApiResource>(user);
+
+                    AwaitingUsersAsResource.Add(userToAdd);
+                }
+
+                return AwaitingUsersAsResource; 
+            }
+            return null;
         }
     }
 }

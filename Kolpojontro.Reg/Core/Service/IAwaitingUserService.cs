@@ -9,5 +9,6 @@ namespace Kolpojontro.Reg.Core
     public interface IAwaitingUserService
     {
         Task<AwaitingUser> CreateUserAsync(AwaitingUserApiResource user);
+        Task<List<AwaitingUserApiResource>> GetAwaitingUsers();
     }
 }

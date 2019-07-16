@@ -53,6 +53,7 @@ namespace Kolpojontro.Reg
             //======= Add AutoMapper ========
             var autoMapperConfig = new MapperConfiguration(cfg =>
             {
+                // for mapping FROM AwaitingUserApiResource TO AwaitingUser
                 cfg.CreateMap<AwaitingUserApiResource, AwaitingUser>()
                     .ForMember(x => x.FirstName, opt => opt.MapFrom(a => a.FirstName))
                     .ForMember(x => x.LastName, opt => opt.MapFrom(a => a.LastName))
@@ -67,6 +68,22 @@ namespace Kolpojontro.Reg
                     .ForMember(x => x.DOB, opt => opt.Ignore())
                     .ForMember(x => x.Status, opt => opt.Ignore())
                     .ForMember(x => x.StatusLastUpdatedAt, opt => opt.Ignore());
+
+                // for mapping FROM AwaitingUser TO AwaitingUserApiResource
+                cfg.CreateMap<AwaitingUser, AwaitingUserApiResource>()
+                    .ForMember(x => x.FirstName, opt => opt.MapFrom(a => a.FirstName))
+                    .ForMember(x => x.LastName, opt => opt.MapFrom(a => a.LastName))
+                    .ForMember(x => x.Gender, opt => opt.MapFrom(a => a.Gender))
+                    .ForMember(x => x.ReasonForJoining, opt => opt.MapFrom(a => a.ReasonForJoining))
+                    .ForMember(x => x.PresentOrganization, opt => opt.MapFrom(a => a.PresentOrganization))
+                    .ForMember(x => x.VolunteeingExperience, opt => opt.MapFrom(a => a.VolunteeingExperience))
+                    .ForMember(x => x.DateOfBirth, opt => opt.MapFrom(a => a.DateOfBirth))
+                    .ForMember(x => x.CityOfResidence, opt => opt.MapFrom(a => a.CityOfResidence))
+                    .ForMember(x => x.CountryOfResidence, opt => opt.MapFrom(a => a.CountryOfResidence))
+                    .ForSourceMember(x => x.Id, opt => opt.DoNotValidate())
+                    .ForSourceMember(x => x.DOB, opt => opt.DoNotValidate())
+                    .ForSourceMember(x => x.Status, opt => opt.DoNotValidate())
+                    .ForSourceMember(x => x.StatusLastUpdatedAt, opt => opt.DoNotValidate());
             });
 
             // only during development, validate your mappings; remove it before release

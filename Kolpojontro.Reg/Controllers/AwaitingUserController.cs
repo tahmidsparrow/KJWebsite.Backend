@@ -39,5 +39,17 @@ namespace Kolpojontro.Reg.Controllers
 
             throw new ApplicationException("Invalid Model");
         }
+
+        [HttpGet]
+        public async Task<List<AwaitingUserApiResource>> All()
+        {
+            var result = await _awaitingService.GetAwaitingUsers();
+            if(result != null)
+            {
+                return result;
+            }
+
+            throw new ApplicationException("Error occured while fetching data");
+        }
     }
 }

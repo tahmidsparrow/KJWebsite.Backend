@@ -1,0 +1,15 @@
+URL: /api/awaitinguser/create
+
+Method: Post
+Body:
+{
+	"FirstName": "New User 2 First",
+	"LastName": "New User 2 Last",
+	"Gender": "Male",
+	"ReasonForJoining": "Because of Passion",
+	"PresentOrganization": "Amra Korbo Joy",
+	"VolunteeingExperience": "1 years",
+	"DateOfBirth": "07/19/1996",
+	"CityOfResidence": "Khulna",
+	"CountryOfResidence": "Dhaka"
+}

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kolpojontro.Reg.Repositories
 {
@@ -16,6 +17,11 @@ namespace Kolpojontro.Reg.Repositories
             _applicationDbContext = applicationDbContext;
         }
 
+        private IQueryable<AwaitingUser> GetAllAwaitingUsers()
+        {
+            return _applicationDbContext.AwaitingUsers.AsQueryable();
+        }
+
         public async Task<AwaitingUser> CreateUserAsync(AwaitingUser awaitingUser)
         {
             if (awaitingUser == null)
@@ -23,8 +29,19 @@ namespace Kolpojontro.Reg.Repositories
 
             var result = _applicationDbContext.AwaitingUsers.Add(awaitingUser);
             await _applicationDbContext.SaveChangesAsync();
-
+            
             return result.Entity;
+        }
+
+        public async Task<List<AwaitingUser>> GetAwaitingUsers()
+        {
+            var result = await _applicationDbContext.AwaitingUsers.ToListAsync();
+            if(result.Count > 0)
+            {
+                return result;
+            }
+
+            return null;
         }
     }
 }
