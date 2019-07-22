@@ -55,5 +55,19 @@ namespace Kolpojontro.Reg.Services
             }
             return null;
         }
+
+        public async Task<AwaitingUserApiResource> GetUserByIdAsync(string Id)
+        {
+            var response = await _awaitingUserRepository.GetUserByIdAsync(Id);
+
+            if (response != null)
+            {
+                var result = _mapper.Map<AwaitingUserApiResource>(response);
+
+                return result;
+            }
+
+            return null;
+        }
     }
 }

@@ -8,6 +8,8 @@ using Kolpojontro.Reg.Core.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RiskFirst.Hateoas;
+using RiskFirst.Hateoas.Models;
 
 namespace Kolpojontro.Reg.Controllers
 {
@@ -17,10 +19,13 @@ namespace Kolpojontro.Reg.Controllers
     public class AwaitingUserController : ControllerBase
     {
         private readonly IAwaitingUserService _awaitingService;
+        private readonly ILinksService _linksService;
 
-        public AwaitingUserController(IAwaitingUserService awaitingService)
+        public AwaitingUserController(IAwaitingUserService awaitingService,
+                                        ILinksService linksService)
         {
             _awaitingService = awaitingService;
+            _linksService = linksService;
         }
 
         [HttpPost]
@@ -40,13 +45,34 @@ namespace Kolpojontro.Reg.Controllers
             throw new ApplicationException("Invalid Model");
         }
 
-        [HttpGet]
-        public async Task<List<AwaitingUserApiResource>> All()
+        [HttpGet("{Id}", Name = "GetModelByIdRoute")]
+        public async Task<AwaitingUserApiResource> Get(string Id)
         {
-            var result = await _awaitingService.GetAwaitingUsers();
-            if(result != null)
+            var awaitingUser = await _awaitingService.GetUserByIdAsync(Id);
+
+            if (awaitingUser != null)
             {
-                return result;
+                //await _linksService.AddLinksAsync(awaitingUser);
+                return awaitingUser;
+            }
+
+            throw new ApplicationException("Awaiting User Not Found");
+        }
+
+        [HttpGet(Name = "GetAllModelsRoute")]
+        public async Task<ItemsLinkContainer<AwaitingUserApiResource>> All()
+        {
+            var awaitingUsers = await _awaitingService.GetAwaitingUsers();
+
+
+            if (awaitingUsers != null)
+            {
+                var results = new ItemsLinkContainer<AwaitingUserApiResource>()
+                {
+                    Items = awaitingUsers
+                };
+                await _linksService.AddLinksAsync(results);
+                return results;
             }
 
             throw new ApplicationException("Error occured while fetching data");

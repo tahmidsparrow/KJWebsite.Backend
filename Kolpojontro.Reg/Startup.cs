@@ -19,6 +19,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RiskFirst.Hateoas;
 
 namespace Kolpojontro.Reg
 {
@@ -95,6 +96,15 @@ namespace Kolpojontro.Reg
 
             //======= Add MVC =======
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            //======= Add HATEOAS ======
+            services.AddLinks(config =>
+            {
+                config.AddPolicy<AwaitingUserApiResource>(policy =>
+                {
+                    policy.RequireRoutedLink("all", "GetAllModelsRoute");
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

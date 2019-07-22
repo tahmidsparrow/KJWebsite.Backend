@@ -43,5 +43,16 @@ namespace Kolpojontro.Reg.Repositories
 
             return null;
         }
+
+        public async Task<AwaitingUser> GetUserByIdAsync(string Id)
+        {
+            var result = await _applicationDbContext.AwaitingUsers.FindAsync(Id);
+
+            if (result != null) {
+                return result;
+            }
+
+            return null;
+        }
     }
 }
