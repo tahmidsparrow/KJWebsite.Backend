@@ -33,5 +33,16 @@ namespace Kolpojontro.Reg.Controllers
             _roleManager = roleManager;
             _configuration = configuration;
         }
+
+        public Task<object> Register() {
+            return null;
+        }
+
+        public Task<object> Login()
+        {
+            return null;
+        }
     }
+
+
 }

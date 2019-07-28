@@ -93,5 +93,21 @@ namespace Kolpojontro.Reg.Services
 
             return null;
         }
+
+        public async Task<AwaitingUser> UpdateAwaitingUser(AwaitingUser user)
+        {
+            if(user != null)
+            {
+                var result = await _awaitingUserRepository.UpdateAwaitingUser(user);
+
+                if (result != null)
+                {
+                    return result;
+                }
+
+            }
+
+            return null;
+        }
     }
 }

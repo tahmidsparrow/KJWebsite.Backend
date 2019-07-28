@@ -66,5 +66,18 @@ namespace Kolpojontro.Reg.Repositories
 
             return null;
         }
+
+        public async Task<AwaitingUser> UpdateAwaitingUser(AwaitingUser awaitingUser)
+        {
+            if(awaitingUser == null)
+            {
+                throw new ArgumentNullException("Invalid Argument");
+            }
+
+            var result = _applicationDbContext.AwaitingUsers.Update(awaitingUser);
+            await _applicationDbContext.SaveChangesAsync();
+            
+            return null;
+        }
     }
 }

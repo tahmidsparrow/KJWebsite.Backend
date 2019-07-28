@@ -61,7 +61,7 @@ namespace Kolpojontro.Reg.Controllers
         }
 
         [HttpGet(Name = "GetAllAWAUserDto")]
-        public async Task<List<AwaitingUserApiResource>> All()
+        public async Task<List<AwaitingUserApiResource>> Get()
         {
             var awaitingUsers = await _awaitingService.GetAwaitingUsers();
 
@@ -91,6 +91,22 @@ namespace Kolpojontro.Reg.Controllers
             }
 
             throw new ApplicationException("Error occured while fetching data");
+        }
+
+        [HttpPut(Name = "UpdateUser")]
+        public async Task<AwaitingUser> Update([FromBody] AwaitingUser awaitingUser)
+        {
+            if(ModelState.IsValid)
+            {
+                var result = await _awaitingService.UpdateAwaitingUser(awaitingUser);
+
+                if(result != null)
+                {
+                    return result;
+                }
+            }
+
+            throw new ApplicationException("Invalid Request");
         }
     }
 }

@@ -12,5 +12,6 @@ namespace Kolpojontro.Reg.Core
         Task<AwaitingUserApiResource> GetUserByIdAsync(int Id);
         Task<List<AwaitingUserApiResource>> GetAwaitingUsers();
         Task<List<AwaitingUserApiResource>> GetAwaitingUsersByStatus(string status);
+        Task<AwaitingUser> UpdateAwaitingUser(AwaitingUser user);
     }
 }
