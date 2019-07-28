@@ -7,7 +7,9 @@ namespace Kolpojontro.Reg.Core.Models
 {
     public enum ERoles
     {
-        Admin = 0,
-        Common = 1
+        SuperAdmin = 0,
+        Admin = 1,
+        Moderator = 2,
+        Member = 3
     }
 }
