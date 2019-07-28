@@ -7,6 +7,7 @@ using Kolpojontro.Reg.Core;
 using Kolpojontro.Reg.Core.ApiResources;
 using Kolpojontro.Reg.Core.Models;
 using Kolpojontro.Reg.Core.Repositories;
+using Kolpojontro.Reg.Core.Service;
 using Kolpojontro.Reg.Persistence;
 using Kolpojontro.Reg.Repositories;
 using Kolpojontro.Reg.Services;
@@ -19,7 +20,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RiskFirst.Hateoas;
 
 namespace Kolpojontro.Reg
 {
@@ -44,6 +44,7 @@ namespace Kolpojontro.Reg
 
             // ============= Add Services ===========
             services.AddScoped<IAwaitingUserService, AwaitingUserService>();
+            services.AddScoped<ICommonService, CommonService>();
 
             //============== Add Identity ==========
             services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -66,6 +67,7 @@ namespace Kolpojontro.Reg
                     .ForMember(x => x.CityOfResidence, opt => opt.MapFrom(a => a.CityOfResidence))
                     .ForMember(x => x.CountryOfResidence, opt => opt.MapFrom(a => a.CountryOfResidence))
                     .ForMember(x => x.Id, opt => opt.Ignore())
+                    //.ForMember(x => x.Id, opt => opt.Ignore())
                     .ForMember(x => x.DOB, opt => opt.Ignore())
                     .ForMember(x => x.Status, opt => opt.Ignore())
                     .ForMember(x => x.StatusLastUpdatedAt, opt => opt.Ignore());
@@ -81,7 +83,7 @@ namespace Kolpojontro.Reg
                     .ForMember(x => x.DateOfBirth, opt => opt.MapFrom(a => a.DateOfBirth))
                     .ForMember(x => x.CityOfResidence, opt => opt.MapFrom(a => a.CityOfResidence))
                     .ForMember(x => x.CountryOfResidence, opt => opt.MapFrom(a => a.CountryOfResidence))
-                    .ForSourceMember(x => x.Id, opt => opt.DoNotValidate())
+                    .ForMember(x => x.Id, opt => opt.MapFrom(a => a.Id))
                     .ForSourceMember(x => x.DOB, opt => opt.DoNotValidate())
                     .ForSourceMember(x => x.Status, opt => opt.DoNotValidate())
                     .ForSourceMember(x => x.StatusLastUpdatedAt, opt => opt.DoNotValidate());
@@ -98,13 +100,7 @@ namespace Kolpojontro.Reg
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             //======= Add HATEOAS ======
-            services.AddLinks(config =>
-            {
-                config.AddPolicy<AwaitingUserApiResource>(policy =>
-                {
-                    policy.RequireRoutedLink("all", "GetAllModelsRoute");
-                });
-            });
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

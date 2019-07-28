@@ -44,12 +44,24 @@ namespace Kolpojontro.Reg.Repositories
             return null;
         }
 
-        public async Task<AwaitingUser> GetUserByIdAsync(string Id)
+        public async Task<AwaitingUser> GetUserByIdAsync(int Id)
         {
             var result = await _applicationDbContext.AwaitingUsers.FindAsync(Id);
 
             if (result != null) {
                 return result;
+            }
+
+            return null;
+        }
+
+        public async Task<List<AwaitingUser>> GetAwaitingUsersByStatus(string status)
+        {
+            var results = await _applicationDbContext.AwaitingUsers.Where(awuser => awuser.Status == status).ToListAsync();
+
+            if (results != null)
+            {
+                return results;
             }
 
             return null;
