@@ -108,5 +108,18 @@ namespace Kolpojontro.Reg.Controllers
 
             throw new ApplicationException("Invalid Request");
         }
+
+        [HttpDelete("{Id}",Name = "DeleteUser")]
+        public async Task<AwaitingUser> Delete(int Id)
+        {
+            var result = await _awaitingService.DeleteAwaitingUser(Id);
+
+            if (result != null)
+            {
+                return result;
+            }
+
+            throw new ApplicationException("Delete User Failed");
+        }
     }
 }

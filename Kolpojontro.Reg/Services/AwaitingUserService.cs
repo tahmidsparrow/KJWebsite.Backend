@@ -109,5 +109,17 @@ namespace Kolpojontro.Reg.Services
 
             return null;
         }
+
+        public async Task<AwaitingUser> DeleteAwaitingUser(int Id)
+        {
+            var result = await _awaitingUserRepository.DeleteAwaitingUser(Id);
+
+            if(result != null)
+            {
+                return result;
+            }
+
+            return null;
+        }
     }
 }

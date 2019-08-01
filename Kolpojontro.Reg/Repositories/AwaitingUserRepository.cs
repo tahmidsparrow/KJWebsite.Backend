@@ -79,5 +79,19 @@ namespace Kolpojontro.Reg.Repositories
             
             return null;
         }
+
+        public async Task<AwaitingUser> DeleteAwaitingUser(int Id)
+        {
+            var user = await _applicationDbContext.AwaitingUsers.FindAsync(Id);
+
+            if(user != null)
+            {
+                var result = _applicationDbContext.AwaitingUsers.Remove(user);
+                await _applicationDbContext.SaveChangesAsync();
+                return result.Entity;
+            }
+
+            return null;
+        }
     }
 }
