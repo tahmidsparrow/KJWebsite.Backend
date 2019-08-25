@@ -17,7 +17,7 @@ namespace Kolpojontro.Reg.Controllers
     [AllowAnonymous]
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class AwaitingUserController : ControllerBase
+    public class AwaitingUserController : Controller
     {
         private readonly IAwaitingUserService _awaitingService;
         private readonly ICommonService _commonService;
@@ -30,7 +30,7 @@ namespace Kolpojontro.Reg.Controllers
         }
 
         [HttpPost]
-        public async Task<object> Create([FromBody] AwaitingUserApiResource model) {
+        public async Task<ActionResult<AwaitingUser>> Create([FromBody] AwaitingUserApiResource model) {
 
             if (ModelState.IsValid)
             {
@@ -48,7 +48,7 @@ namespace Kolpojontro.Reg.Controllers
         }
 
         [HttpGet("{Id}", Name = "GetAWAUserDto")]
-        public async Task<object> Get(int Id)
+        public async Task<ActionResult<AwaitingUserApiResource>> Get(int Id)
         {
             var awaitingUser = await _awaitingService.GetUserByIdAsync(Id);
 
@@ -61,7 +61,7 @@ namespace Kolpojontro.Reg.Controllers
         }
 
         [HttpGet(Name = "GetAllAWAUserDto")]
-        public async Task<List<AwaitingUserApiResource>> Get()
+        public async Task<ActionResult<List<AwaitingUserApiResource>>> Get()
         {
             var awaitingUsers = await _awaitingService.GetAwaitingUsers();
 
@@ -75,7 +75,7 @@ namespace Kolpojontro.Reg.Controllers
         }
 
         [HttpGet("{status}")]
-        public async Task<List<AwaitingUserApiResource>> Status(string status) {
+        public async Task<ActionResult<List<AwaitingUserApiResource>>> Status(string status) {
             string Status = _commonService.Capitalize(status) ?? null;
             if (Status == null)
                 throw new ApplicationException("Status must not be null");
@@ -94,7 +94,7 @@ namespace Kolpojontro.Reg.Controllers
         }
 
         [HttpPut(Name = "UpdateUser")]
-        public async Task<AwaitingUser> Update([FromBody] AwaitingUser awaitingUser)
+        public async Task<ActionResult<AwaitingUser>> Update([FromBody] AwaitingUser awaitingUser)
         {
             if(ModelState.IsValid)
             {
