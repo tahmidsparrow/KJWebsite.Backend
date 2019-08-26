@@ -7,9 +7,11 @@ using Kolpojontro.Reg.Core;
 using Kolpojontro.Reg.Core.ApiResources;
 using Kolpojontro.Reg.Core.Models;
 using Kolpojontro.Reg.Core.Repositories;
+using Kolpojontro.Reg.Core.Security.Hashing;
 using Kolpojontro.Reg.Core.Service;
 using Kolpojontro.Reg.Persistence;
 using Kolpojontro.Reg.Repositories;
+using Kolpojontro.Reg.Security.Hashing;
 using Kolpojontro.Reg.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -43,8 +45,10 @@ namespace Kolpojontro.Reg
 
 
             // ============= Add Services ===========
+            services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IAwaitingUserService, AwaitingUserService>();
             services.AddScoped<ICommonService, CommonService>();
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
 
             //============== Add Identity ==========
             services.AddIdentity<ApplicationUser, IdentityRole>()

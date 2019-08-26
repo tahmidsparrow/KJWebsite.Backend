@@ -1,0 +1,77 @@
+﻿using Kolpojontro.Reg.Core.Models;
+using Kolpojontro.Reg.Core.Repositories;
+using Kolpojontro.Reg.Core.Service;
+using System;
+using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
+using Kolpojontro.Reg.Core.Security.Hashing;
+
+namespace Kolpojontro.Reg.Services
+{
+    public class AccountService : IAccountService
+    {
+        //public readonly IAccountRepository _accountRepository;
+        public readonly UserManager<ApplicationUser> _userManager;
+        public readonly SignInManager<ApplicationUser> _signInManager;
+        public readonly RoleManager<IdentityRole> _roleManager;
+        public readonly IConfiguration _configuration;
+        public readonly IPasswordHasher _passwordHasher;
+
+        public AccountService(UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
+            IConfiguration configuration,
+            IPasswordHasher passwordHasher)
+        {
+            //_accountRepository = accountRepository;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _roleManager = roleManager;
+            _configuration = configuration;
+            _passwordHasher = passwordHasher;
+        }
+
+        public Task<bool> ChangePasswordAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<bool> SignInAsync(ApplicationUser applicationUser)
+        {
+            try
+            {
+                await _signInManager.SignInAsync(applicationUser, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public async Task<IdentityResult> RegisterAsync(ApplicationUser applicationUser)
+        {
+            try {
+                var result = await _userManager.CreateAsync(applicationUser, _passwordHasher.HashPassword(applicationUser.PasswordHash));
+                
+                return result;
+            }catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        public Task<bool> SignOutAsync()
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

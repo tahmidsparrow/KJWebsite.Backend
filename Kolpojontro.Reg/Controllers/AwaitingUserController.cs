@@ -71,7 +71,8 @@ namespace Kolpojontro.Reg.Controllers
                 return awaitingUsers;
             }
 
-            throw new ApplicationException("Error occured while fetching data");
+            return NoContent();
+            //throw new ApplicationException("Error occured while fetching data");
         }
 
         [HttpGet("{status}")]

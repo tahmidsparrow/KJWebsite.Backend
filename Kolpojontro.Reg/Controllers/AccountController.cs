@@ -3,41 +3,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kolpojontro.Reg.Core.Models;
-using Microsoft.AspNetCore.Http;
+using Kolpojontro.Reg.Core.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace Kolpojontro.Reg.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController : Controller
     {
 
-        public readonly UserManager<ApplicationUser> _userManager;
-        public readonly SignInManager<ApplicationUser> _signInManager;
-        public readonly RoleManager<IdentityRole> _roleManager;
-        public readonly IConfiguration _configuration;
+        private readonly IAccountService _accountService;
 
-
-        public AccountController(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration
-            )
+        public AccountController(IAccountService accountService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _roleManager = roleManager;
-            _configuration = configuration;
+            _accountService = accountService;
         }
 
-        public Task<object> Register() {
-            return null;
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ActionResult<IdentityResult>> Register([FromBody] ApplicationUser applicationUser) {
+
+            if (applicationUser != null && ModelState.IsValid)
+            {
+                var result = await _accountService.RegisterAsync(applicationUser);
+                return result;
+            }
+            else {
+                return BadRequest();
+            }
         }
 
+        [HttpPost]
         public Task<object> Login()
         {
             return null;
