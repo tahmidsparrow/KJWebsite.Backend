@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kolpojontro.Reg.Core.ApiResources;
 using Kolpojontro.Reg.Core.Models;
 using Kolpojontro.Reg.Core.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +25,7 @@ namespace Kolpojontro.Reg.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<ActionResult<IdentityResult>> Register([FromBody] ApplicationUser applicationUser) {
+        public async Task<ActionResult<UserDTO>> Register([FromBody] ApplicationUser applicationUser) {
 
             if (applicationUser != null && ModelState.IsValid)
             {

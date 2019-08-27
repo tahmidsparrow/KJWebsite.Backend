@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Kolpojontro.Reg.Core.Security.Hashing;
+using Kolpojontro.Reg.Core.ApiResources;
 
 namespace Kolpojontro.Reg.Services
 {
@@ -56,13 +57,48 @@ namespace Kolpojontro.Reg.Services
             throw new NotImplementedException();
         }
 
-        public async Task<IdentityResult> RegisterAsync(ApplicationUser applicationUser)
+        public async Task<UserDTO> RegisterAsync(ApplicationUser applicationUser)
         {
             try {
                 var result = await _userManager.CreateAsync(applicationUser, _passwordHasher.HashPassword(applicationUser.PasswordHash));
+
+                var roles = applicationUser.Roles.Split(",");
+
+                if (roles.Count() > 0)
+                {
+                   foreach(var role in roles)
+                    {
+                        if (!Enum.IsDefined(typeof(ERoles), role))
+                        {
+                            return null;
+                        }
+                        else if (Enum.IsDefined(typeof(ERoles), role))
+                        {
+                            var roleExist = await _roleManager.RoleExistsAsync(role);
+                            if(!roleExist)
+                                await _roleManager.CreateAsync(new IdentityRole(role));
+                        }
+                        
+                        await _userManager.AddToRoleAsync(applicationUser, role);
+                    }
+
+                }
+
+                var user = await _userManager.FindByEmailAsync(applicationUser.Email);
+
+
+                var response = new UserDTO
+                {
+                    applicationUser = user,
+                    Response = result
+                };
+
                 
-                return result;
-            }catch(Exception ex)
+
+                return response;
+
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return null;

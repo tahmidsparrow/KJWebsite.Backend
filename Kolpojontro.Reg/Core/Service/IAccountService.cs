@@ -1,4 +1,5 @@
-﻿using Kolpojontro.Reg.Core.Models;
+﻿using Kolpojontro.Reg.Core.ApiResources;
+using Kolpojontro.Reg.Core.Models;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -9,8 +10,8 @@ namespace Kolpojontro.Reg.Core.Service
 {
     public interface IAccountService
     {
-        Task<IdentityResult> RegisterAsync(ApplicationUser applicationUser);
-        Task<bool> SignInAsync();
+        Task<UserDTO> RegisterAsync(ApplicationUser applicationUser);
+        Task<bool> SignInAsync(ApplicationUser applicationUser);
         Task<bool> SignOutAsync();
         Task<bool> ChangePasswordAsync();
     }
