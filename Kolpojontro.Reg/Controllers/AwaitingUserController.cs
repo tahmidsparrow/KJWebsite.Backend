@@ -122,5 +122,12 @@ namespace Kolpojontro.Reg.Controllers
 
             throw new ApplicationException("Delete User Failed");
         }
+
+        [HttpPost]
+        [Authorize]
+        public string Approve()
+        {
+            return "OK";
+        }
     }
 }

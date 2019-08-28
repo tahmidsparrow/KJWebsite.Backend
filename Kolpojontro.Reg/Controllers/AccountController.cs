@@ -25,12 +25,12 @@ namespace Kolpojontro.Reg.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<ActionResult<UserDTO>> Register([FromBody] ApplicationUser applicationUser) {
+        public async Task<IActionResult> Register([FromBody] ApplicationUser applicationUser) {
 
             if (applicationUser != null && ModelState.IsValid)
             {
                 var result = await _accountService.RegisterAsync(applicationUser);
-                return result;
+                return Ok(result);
             }
             else {
                 return BadRequest();

@@ -12,17 +12,3 @@ C:\AspCoreWorkSpace\Kolpojontro.Reg\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolp
 C:\AspCoreWorkSpace\Kolpojontro.Reg\Kolpojontro.Reg\bin\Debug\netcoreapp2.2\Kolpojontro.Reg.pdb
 C:\AspCoreWorkSpace\Kolpojontro.Reg\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.dll
 C:\AspCoreWorkSpace\Kolpojontro.Reg\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.pdb
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\bin\Debug\netcoreapp2.2\Kolpojontro.Reg.deps.json
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\bin\Debug\netcoreapp2.2\Kolpojontro.Reg.runtimeconfig.json
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\bin\Debug\netcoreapp2.2\Kolpojontro.Reg.runtimeconfig.dev.json
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\bin\Debug\netcoreapp2.2\Kolpojontro.Reg.dll
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\bin\Debug\netcoreapp2.2\Kolpojontro.Reg.pdb
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.csprojAssemblyReference.cache
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.csproj.CoreCompileInputs.cache
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.RazorAssemblyInfo.cache
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.RazorAssemblyInfo.cs
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.AssemblyInfoInputs.cache
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.AssemblyInfo.cs
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.RazorTargetAssemblyInfo.cache
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.dll
-D:\Visual Workspace\kj-registration\Kolpojontro.Reg\obj\Debug\netcoreapp2.2\Kolpojontro.Reg.pdb

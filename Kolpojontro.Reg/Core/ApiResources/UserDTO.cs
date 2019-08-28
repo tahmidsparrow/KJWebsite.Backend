@@ -11,5 +11,6 @@ namespace Kolpojontro.Reg.Core.ApiResources
     {
         public IdentityResult Response { get; set; }
         public ApplicationUser applicationUser { get; set; }
+        public string Token { get; set; }
     }
 }

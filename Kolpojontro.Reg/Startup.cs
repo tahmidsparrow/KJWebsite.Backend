@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using Kolpojontro.Reg.Config;
 using Kolpojontro.Reg.Core;
 using Kolpojontro.Reg.Core.ApiResources;
 using Kolpojontro.Reg.Core.Models;
 using Kolpojontro.Reg.Core.Repositories;
+using Kolpojontro.Reg.Core.Security;
 using Kolpojontro.Reg.Core.Security.Hashing;
 using Kolpojontro.Reg.Core.Service;
 using Kolpojontro.Reg.Persistence;
 using Kolpojontro.Reg.Repositories;
 using Kolpojontro.Reg.Security.Hashing;
+using Kolpojontro.Reg.Security.Token;
 using Kolpojontro.Reg.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -22,6 +27,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using TokenHandler = Kolpojontro.Reg.Security.Token.TokenHandler;
 
 namespace Kolpojontro.Reg
 {
@@ -37,6 +44,10 @@ namespace Kolpojontro.Reg
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            // ============= Global Config from AppSettings ==============
+            services.Configure<AppSettings>(Configuration.GetSection("token"));
+            
             //============== Db Context ============
             services.AddDbContext<ApplicationDbContext>();
 
@@ -49,6 +60,8 @@ namespace Kolpojontro.Reg
             services.AddScoped<IAwaitingUserService, AwaitingUserService>();
             services.AddScoped<ICommonService, CommonService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<AppSettings>();
+            services.AddScoped<ITokenHandler, TokenHandler>();
 
             //============== Add Identity ==========
             services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -99,6 +112,25 @@ namespace Kolpojontro.Reg
             var mapper = autoMapperConfig.CreateMapper();
 
             services.AddSingleton(mapper);
+
+            var key = Encoding.ASCII.GetBytes(Configuration["token:JwtKey"]);
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
 
             //======= Add MVC =======
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);

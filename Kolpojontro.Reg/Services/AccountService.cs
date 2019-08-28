@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Kolpojontro.Reg.Core.Security.Hashing;
 using Kolpojontro.Reg.Core.ApiResources;
+using Kolpojontro.Reg.Core.Security;
 
 namespace Kolpojontro.Reg.Services
 {
@@ -21,12 +22,15 @@ namespace Kolpojontro.Reg.Services
         public readonly RoleManager<IdentityRole> _roleManager;
         public readonly IConfiguration _configuration;
         public readonly IPasswordHasher _passwordHasher;
+        public readonly ITokenHandler _tokenHandler;
+        
 
         public AccountService(UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            IPasswordHasher passwordHasher)
+            IPasswordHasher passwordHasher,
+            ITokenHandler tokenHandler)
         {
             //_accountRepository = accountRepository;
             _userManager = userManager;
@@ -34,6 +38,7 @@ namespace Kolpojontro.Reg.Services
             _roleManager = roleManager;
             _configuration = configuration;
             _passwordHasher = passwordHasher;
+            _tokenHandler = tokenHandler;
         }
 
         public Task<bool> ChangePasswordAsync()
@@ -59,8 +64,9 @@ namespace Kolpojontro.Reg.Services
 
         public async Task<UserDTO> RegisterAsync(ApplicationUser applicationUser)
         {
+            IdentityResult result = new IdentityResult();
+
             try {
-                var result = await _userManager.CreateAsync(applicationUser, _passwordHasher.HashPassword(applicationUser.PasswordHash));
 
                 var roles = applicationUser.Roles.Split(",");
 
@@ -78,19 +84,21 @@ namespace Kolpojontro.Reg.Services
                             if(!roleExist)
                                 await _roleManager.CreateAsync(new IdentityRole(role));
                         }
-                        
+                        result = await _userManager.CreateAsync(applicationUser, _passwordHasher.HashPassword(applicationUser.PasswordHash));
+
                         await _userManager.AddToRoleAsync(applicationUser, role);
                     }
 
                 }
 
                 var user = await _userManager.FindByEmailAsync(applicationUser.Email);
-
+                var token = _tokenHandler.CreateAccessToken(user);
 
                 var response = new UserDTO
                 {
                     applicationUser = user,
-                    Response = result
+                    Response = result,
+                    Token = token
                 };
 
                 
