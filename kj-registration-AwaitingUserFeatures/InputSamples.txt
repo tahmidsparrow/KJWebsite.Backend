@@ -1,0 +1,37 @@
+URL: /api/awaitinguser/create
+
+Method: Post
+Body:
+{
+	"FirstName": "New User 2 First",
+	"LastName": "New User 2 Last",
+	"Gender": "Male",
+	"ReasonForJoining": "Because of Passion",
+	"PresentOrganization": "Amra Korbo Joy",
+	"VolunteeingExperience": "1 years",
+	"DateOfBirth": "07/19/1996",
+	"CityOfResidence": "Khulna",
+	"CountryOfResidence": "Dhaka"
+}
+
+
+#Minor Bug fixed while converting milliseconds to dateTime
+#Feature Added: Fetch All Awaiting Users
+
+URL: /api/account/register
+Method: Post
+Body: 
+{
+	"UserName": "shakif95",
+	"Email": "admin@admin.com",
+	"PasswordHash": "123456",
+	"FirstName": "New User 2 First",
+	"LastName": "New User 2 Last",
+	"Gender": "Male",
+	"ReasonForJoining": "Because of Passion",
+	"PresentOrganization": "Amra Korbo Joy",
+	"VolunteeingExperience": "1 years",
+	"DateOfBirth": "07/19/1996",
+	"CityOfResidence": "Khulna",
+	"CountryOfResidence": "Dhaka"
+}
