@@ -30,5 +30,8 @@ namespace Kolpojontro.Reg.Core.Models
         public string Nationality { get; set; }
         public string PersonalWebPage { get; set; }
         public string SocialMediaLink { get; set; }
+
+        //Roles
+        public string Roles { get; set;}
     }
 }

@@ -9,7 +9,10 @@ namespace Kolpojontro.Reg.Core
     public interface IAwaitingUserService
     {
         Task<AwaitingUser> CreateUserAsync(AwaitingUserApiResource user);
-        Task<AwaitingUserApiResource> GetUserByIdAsync(string Id);
+        Task<AwaitingUserApiResource> GetUserByIdAsync(int Id);
         Task<List<AwaitingUserApiResource>> GetAwaitingUsers();
+        Task<List<AwaitingUserApiResource>> GetAwaitingUsersByStatus(string status);
+        Task<AwaitingUser> UpdateAwaitingUser(AwaitingUser user);
+        Task<AwaitingUser> DeleteAwaitingUser(int Id);
     }
 }

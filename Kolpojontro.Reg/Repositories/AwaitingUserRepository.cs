@@ -44,12 +44,51 @@ namespace Kolpojontro.Reg.Repositories
             return null;
         }
 
-        public async Task<AwaitingUser> GetUserByIdAsync(string Id)
+        public async Task<AwaitingUser> GetUserByIdAsync(int Id)
         {
             var result = await _applicationDbContext.AwaitingUsers.FindAsync(Id);
 
             if (result != null) {
                 return result;
+            }
+
+            return null;
+        }
+
+        public async Task<List<AwaitingUser>> GetAwaitingUsersByStatus(string status)
+        {
+            var results = await _applicationDbContext.AwaitingUsers.Where(awuser => awuser.Status == status).ToListAsync();
+
+            if (results != null)
+            {
+                return results;
+            }
+
+            return null;
+        }
+
+        public async Task<AwaitingUser> UpdateAwaitingUser(AwaitingUser awaitingUser)
+        {
+            if(awaitingUser == null)
+            {
+                throw new ArgumentNullException("Invalid Argument");
+            }
+
+            var result = _applicationDbContext.AwaitingUsers.Update(awaitingUser);
+            await _applicationDbContext.SaveChangesAsync();
+            
+            return null;
+        }
+
+        public async Task<AwaitingUser> DeleteAwaitingUser(int Id)
+        {
+            var user = await _applicationDbContext.AwaitingUsers.FindAsync(Id);
+
+            if(user != null)
+            {
+                var result = _applicationDbContext.AwaitingUsers.Remove(user);
+                await _applicationDbContext.SaveChangesAsync();
+                return result.Entity;
             }
 
             return null;

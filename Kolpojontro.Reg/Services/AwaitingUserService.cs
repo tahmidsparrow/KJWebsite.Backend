@@ -55,15 +55,67 @@ namespace Kolpojontro.Reg.Services
             }
             return null;
         }
+        
 
-        public async Task<AwaitingUserApiResource> GetUserByIdAsync(string Id)
+        public async Task<AwaitingUserApiResource> GetUserByIdAsync(int Id)
         {
             var response = await _awaitingUserRepository.GetUserByIdAsync(Id);
 
             if (response != null)
             {
                 var result = _mapper.Map<AwaitingUserApiResource>(response);
+                
+                return result;
+            }
 
+            return null;
+        }
+
+        //GET Awaiting Users By Status
+        public async Task<List<AwaitingUserApiResource>> GetAwaitingUsersByStatus(string status)
+        {
+            var result = await _awaitingUserRepository.GetAwaitingUsersByStatus(status);
+
+            if (result != null && result.Count > 0)
+            {
+                List<AwaitingUserApiResource> AwaitingUsersAsResource = new List<AwaitingUserApiResource>();
+
+                foreach (AwaitingUser user in result)
+                {
+
+                    var userToAdd = _mapper.Map<AwaitingUserApiResource>(user);
+
+                    AwaitingUsersAsResource.Add(userToAdd);
+                }
+
+                return AwaitingUsersAsResource;
+            }
+
+            return null;
+        }
+
+        public async Task<AwaitingUser> UpdateAwaitingUser(AwaitingUser user)
+        {
+            if(user != null)
+            {
+                var result = await _awaitingUserRepository.UpdateAwaitingUser(user);
+
+                if (result != null)
+                {
+                    return result;
+                }
+
+            }
+
+            return null;
+        }
+
+        public async Task<AwaitingUser> DeleteAwaitingUser(int Id)
+        {
+            var result = await _awaitingUserRepository.DeleteAwaitingUser(Id);
+
+            if(result != null)
+            {
                 return result;
             }
 

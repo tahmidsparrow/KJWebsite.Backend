@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 
 namespace Kolpojontro.Reg.Core.Models
 {
-    public enum ERoles
+    public class LoginDTO
     {
-        SuperAdmin = 0,
-        Admin = 1,
-        Moderator = 2,
-        Member = 3
+        public string UsernameOrEmail { get; set; }
+        public string HashedPassword { get; set; }
     }
 }
