@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/KJWebsite.BuildingBlocks/KJWebsite.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/ApiGateway/ApiGateway.csproj" />
+    <Project Path="src/Services/AuthIdentityService/AuthIdentityService.csproj" />
+    <Project Path="src/Services/ContentService/ContentService.csproj" />
+    <Project Path="src/Services/CtaSubmissionService/CtaSubmissionService.csproj" />
+  </Folder>
+</Solution>
