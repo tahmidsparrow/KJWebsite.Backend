@@ -1,39 +1,108 @@
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-var summaries = new[]
+var users = new List<UserRecord>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    new("usr_admin", "admin@site.org", "admin123", "admin", "active")
 };
 
-app.MapGet("/weatherforecast", () =>
+var accessTokens = new Dictionary<string, UserRecord>(StringComparer.Ordinal);
+var refreshTokens = new Dictionary<string, string>(StringComparer.Ordinal);
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "AuthIdentityService" }));
+
+app.MapPost("/api/v1/auth/login", (LoginRequest payload) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var user = users.FirstOrDefault(u => string.Equals(u.Email, payload.Email, StringComparison.OrdinalIgnoreCase) && u.Password == payload.Password && u.Status == "active");
+    if (user is null)
+    {
+        return Results.Json(ApiError("UNAUTHORIZED", "Invalid credentials."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var token = $"atk_{Guid.NewGuid():N}";
+    var refresh = $"rt_{Guid.NewGuid():N}";
+    accessTokens[token] = user;
+    refreshTokens[refresh] = user.Id;
+
+    return Results.Ok(new
+    {
+        access_token = token,
+        refresh_token = refresh,
+        expires_in = 900,
+        token_type = "Bearer",
+        user = new { id = user.Id, email = user.Email, role = user.Role }
+    });
+});
+
+app.MapPost("/api/v1/auth/refresh", (RefreshTokenRequest payload) =>
+{
+    if (!refreshTokens.TryGetValue(payload.RefreshToken, out var userId))
+    {
+        return Results.Json(ApiError("UNAUTHORIZED", "Invalid refresh token."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var user = users.First(u => u.Id == userId);
+    var token = $"atk_{Guid.NewGuid():N}";
+    var newRefresh = $"rt_{Guid.NewGuid():N}";
+
+    refreshTokens.Remove(payload.RefreshToken);
+    refreshTokens[newRefresh] = user.Id;
+    accessTokens[token] = user;
+
+    return Results.Ok(new
+    {
+        access_token = token,
+        refresh_token = newRefresh,
+        expires_in = 900,
+        token_type = "Bearer",
+        user = new { id = user.Id, email = user.Email, role = user.Role }
+    });
+});
+
+app.MapPost("/api/v1/auth/logout", (RefreshTokenRequest payload) =>
+{
+    if (!refreshTokens.Remove(payload.RefreshToken))
+    {
+        return Results.Json(ApiError("UNAUTHORIZED", "Invalid refresh token."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    return Results.NoContent();
+});
+
+app.MapGet("/api/v1/auth/me", (HttpRequest request) =>
+{
+    if (!request.Headers.TryGetValue("Authorization", out var authHeader))
+    {
+        return Results.Json(ApiError("UNAUTHORIZED", "Missing Authorization header."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    const string bearerPrefix = "Bearer ";
+    var raw = authHeader.ToString();
+    if (!raw.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.Json(ApiError("UNAUTHORIZED", "Invalid Authorization header."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var token = raw[bearerPrefix.Length..].Trim();
+    if (!accessTokens.TryGetValue(token, out var user))
+    {
+        return Results.Json(ApiError("UNAUTHORIZED", "Invalid token."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    return Results.Ok(new { id = user.Id, email = user.Email, role = user.Role });
+});
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+static object ApiError(string code, string message) => new { error = new { code, message } };
+
+record LoginRequest(string Email, string Password);
+record RefreshTokenRequest(string RefreshToken);
+record UserRecord(string Id, string Email, string Password, string Role, string Status);

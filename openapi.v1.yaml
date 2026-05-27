@@ -1,0 +1,638 @@
+openapi: 3.1.0
+info:
+  title: KJWebsite Backend API
+  version: 1.0.0
+  description: Public and admin API contract for KJWebsite microservices via API Gateway.
+servers:
+  - url: http://localhost:7000
+    description: Local API Gateway
+
+tags:
+  - name: Health
+  - name: Content
+  - name: CTA
+  - name: Auth
+  - name: Admin Content
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Gateway health check
+      operationId: getGatewayHealth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/content/projects:
+    get:
+      tags: [Content]
+      summary: List projects
+      operationId: listProjects
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, all]
+            default: active
+      responses:
+        '200':
+          description: Projects list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/content/projects/{id}:
+    get:
+      tags: [Content]
+      summary: Get project by key/id
+      operationId: getProjectById
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/content/news:
+    get:
+      tags: [Content]
+      summary: List news posts
+      operationId: listNews
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: News list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/content/news/{id}:
+    get:
+      tags: [Content]
+      summary: Get news item by key/id
+      operationId: getNewsById
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: News details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/cta/submissions:
+    post:
+      tags: [CTA]
+      summary: Submit CTA form
+      operationId: createCtaSubmission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CtaSubmissionRequest'
+      responses:
+        '201':
+          description: Submission accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtaSubmissionCreatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: Payload too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email/password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Auth tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke refresh token
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '204':
+          description: Logged out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/admin/content/projects:
+    post:
+      tags: [Admin Content]
+      summary: Create project
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpsertRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/admin/content/projects/{id}:
+    put:
+      tags: [Admin Content]
+      summary: Update project
+      operationId: updateProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpsertRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Admin Content]
+      summary: Delete project
+      operationId: deleteProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/admin/content/news:
+    post:
+      tags: [Admin Content]
+      summary: Create news item
+      operationId: createNews
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewsUpsertRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/admin/content/news/{id}:
+    put:
+      tags: [Admin Content]
+      summary: Update news item
+      operationId: updateNews
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewsUpsertRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Admin Content]
+      summary: Delete news item
+      operationId: deleteNews
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Lang:
+      name: lang
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [bn, en]
+        default: en
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: ApiGateway
+      required: [status, service]
+
+    ErrorObject:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid payload
+      required: [code, message]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorObject'
+      required: [error]
+
+    ProjectItem:
+      type: object
+      properties:
+        id: { type: string, example: pathshala }
+        slug: { type: string, example: pathshala }
+        lang:
+          type: string
+          enum: [bn, en]
+        title: { type: string }
+        short_title: { type: string }
+        short_description: { type: string }
+        full_description: { type: string }
+        image_url: { type: string }
+        category: { type: string }
+        year: { type: string }
+        status: { type: string, example: active }
+        icon: { type: string }
+        updated_at: { type: string, format: date-time }
+      required: [id, title, lang]
+
+    ProjectListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectItem'
+      required: [items]
+
+    ProjectTranslationInput:
+      type: object
+      properties:
+        lang:
+          type: string
+          enum: [bn, en]
+        title: { type: string }
+        short_title: { type: string }
+        short_description: { type: string }
+        full_description: { type: string }
+      required: [lang, title]
+
+    ProjectUpsertRequest:
+      type: object
+      properties:
+        slug: { type: string }
+        image_url: { type: string }
+        category: { type: string }
+        year: { type: string }
+        status:
+          type: string
+          enum: [active, draft, archived]
+        icon: { type: string }
+        translations:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ProjectTranslationInput'
+      required: [slug, status, translations]
+
+    NewsItem:
+      type: object
+      properties:
+        id: { type: string, example: bauniabadh-mou }
+        slug: { type: string, example: bauniabadh-mou }
+        lang:
+          type: string
+          enum: [bn, en]
+        title: { type: string }
+        summary: { type: string }
+        content:
+          type: array
+          items: { type: string }
+        image_url: { type: string }
+        date: { type: string }
+        published_at: { type: string, format: date-time }
+        status: { type: string, example: published }
+      required: [id, title, lang]
+
+    NewsListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsItem'
+        total: { type: integer, minimum: 0 }
+        limit: { type: integer, minimum: 1 }
+        offset: { type: integer, minimum: 0 }
+      required: [items, total, limit, offset]
+
+    NewsTranslationInput:
+      type: object
+      properties:
+        lang:
+          type: string
+          enum: [bn, en]
+        title: { type: string }
+        summary: { type: string }
+        content:
+          type: array
+          items: { type: string }
+      required: [lang, title]
+
+    NewsUpsertRequest:
+      type: object
+      properties:
+        slug: { type: string }
+        image_url: { type: string }
+        published_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [published, draft, archived]
+        translations:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/NewsTranslationInput'
+      required: [slug, status, translations]
+
+    CtaSubmissionRequest:
+      type: object
+      properties:
+        formName:
+          type: string
+          enum: [registration, contact, footer-contact, project-involved]
+        ctaType:
+          type: string
+          enum: [join, donate, partnership, get-involved, contact]
+        language:
+          type: string
+          enum: [bn, en]
+        sourcePath:
+          type: string
+          example: /contact?cta=donate
+        values:
+          type: object
+          additionalProperties: true
+        submittedAt:
+          type: string
+          format: date-time
+      required: [formName, ctaType, language, sourcePath, values, submittedAt]
+
+    CtaSubmissionCreatedResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: subm_01JABCDEF
+        status:
+          type: string
+          example: accepted
+        created_at:
+          type: string
+          format: date-time
+      required: [id, status, created_at]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      required: [email, password]
+
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required: [refresh_token]
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+          example: 900
+        token_type:
+          type: string
+          example: Bearer
+        user:
+          $ref: '#/components/schemas/UserProfile'
+      required: [access_token, refresh_token, expires_in, token_type]
+
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string }
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, editor]
+      required: [id, email, role]
