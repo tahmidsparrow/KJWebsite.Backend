@@ -1,3 +1,5 @@
+using CtaSubmissionService.Contracts;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
@@ -30,7 +32,18 @@ app.MapPost("/api/v1/cta/submissions", (CtaSubmissionRequest payload) =>
 
     var id = $"subm_{Guid.NewGuid():N}";
     var createdAt = DateTimeOffset.UtcNow;
-    submissions.Add(new CtaSubmissionRecord(id, payload.FormName, payload.CtaType, payload.Language, payload.SourcePath, payload.Values, payload.SubmittedAt, createdAt));
+    var awaitingProfile = LegacyAwaitingUserMapper.TryMap(payload.Values);
+
+    submissions.Add(new CtaSubmissionRecord(
+        id,
+        payload.FormName,
+        payload.CtaType,
+        payload.Language,
+        payload.SourcePath,
+        payload.Values,
+        payload.SubmittedAt,
+        createdAt,
+        awaitingProfile));
 
     return Results.Created($"/api/v1/cta/submissions/{id}", new { id, status = "accepted", created_at = createdAt });
 });
@@ -38,6 +51,3 @@ app.MapPost("/api/v1/cta/submissions", (CtaSubmissionRequest payload) =>
 app.Run();
 
 static object ApiError(string code, string message) => new { error = new { code, message } };
-
-record CtaSubmissionRequest(string FormName, string CtaType, string Language, string SourcePath, Dictionary<string, object?> Values, DateTimeOffset SubmittedAt);
-record CtaSubmissionRecord(string Id, string FormName, string CtaType, string Language, string SourcePath, Dictionary<string, object?> Values, DateTimeOffset SubmittedAt, DateTimeOffset CreatedAt);
