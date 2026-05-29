@@ -1,31 +1,42 @@
 using CtaSubmissionService.Contracts;
+using CtaSubmissionService.Data;
+using CtaSubmissionService.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
+builder.Services.AddDbContext<CtaDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("CtaDb") ?? "Data Source=cta.db"));
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CtaDbContext>();
+    db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-var submissions = new List<CtaSubmissionRecord>();
 var allowedForms = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "registration", "contact", "footer-contact", "project-involved" };
 var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "join", "donate", "partnership", "get-involved", "contact" };
 var allowedLangs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "bn", "en" };
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "CtaSubmissionService" }));
 
-app.MapPost("/api/v1/cta/submissions", (CtaSubmissionRequest payload) =>
+app.MapPost("/api/v1/cta/submissions", async (CtaSubmissionRequest payload, CtaDbContext db) =>
 {
     if (!allowedForms.Contains(payload.FormName) || !allowedTypes.Contains(payload.CtaType) || !allowedLangs.Contains(payload.Language))
     {
         return Results.BadRequest(ApiError("VALIDATION_ERROR", "Invalid formName, ctaType, or language."));
     }
 
-    var serializedValues = System.Text.Json.JsonSerializer.Serialize(payload.Values);
-    if (serializedValues.Length > 32_000)
+    var valuesJson = System.Text.Json.JsonSerializer.Serialize(payload.Values);
+    if (valuesJson.Length > 32_000)
     {
         return Results.Json(ApiError("PAYLOAD_TOO_LARGE", "values payload exceeds 32KB."), statusCode: StatusCodes.Status413PayloadTooLarge);
     }
@@ -34,16 +45,28 @@ app.MapPost("/api/v1/cta/submissions", (CtaSubmissionRequest payload) =>
     var createdAt = DateTimeOffset.UtcNow;
     var awaitingProfile = LegacyAwaitingUserMapper.TryMap(payload.Values);
 
-    submissions.Add(new CtaSubmissionRecord(
-        id,
-        payload.FormName,
-        payload.CtaType,
-        payload.Language,
-        payload.SourcePath,
-        payload.Values,
-        payload.SubmittedAt,
-        createdAt,
-        awaitingProfile));
+    db.Submissions.Add(new CtaSubmissionEntity
+    {
+        Id = id,
+        FormName = payload.FormName,
+        CtaType = payload.CtaType,
+        Language = payload.Language,
+        SourcePath = payload.SourcePath,
+        ValuesJson = valuesJson,
+        SubmittedAt = payload.SubmittedAt,
+        CreatedAt = createdAt,
+        FirstName = awaitingProfile?.FirstName,
+        LastName = awaitingProfile?.LastName,
+        Gender = awaitingProfile?.Gender,
+        ReasonForJoining = awaitingProfile?.ReasonForJoining,
+        PresentOrganization = awaitingProfile?.PresentOrganization,
+        VolunteeingExperience = awaitingProfile?.VolunteeingExperience,
+        DateOfBirth = awaitingProfile?.DateOfBirth,
+        CityOfResidence = awaitingProfile?.CityOfResidence,
+        CountryOfResidence = awaitingProfile?.CountryOfResidence
+    });
+
+    await db.SaveChangesAsync();
 
     return Results.Created($"/api/v1/cta/submissions/{id}", new { id, status = "accepted", created_at = createdAt });
 });
