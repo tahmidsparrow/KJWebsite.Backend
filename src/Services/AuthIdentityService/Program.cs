@@ -2,9 +2,20 @@ using AuthIdentityService.Contracts;
 using AuthIdentityService.Data;
 using AuthIdentityService.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info.Title = "Auth Identity Service API";
+        document.Info.Description = "Handles user registration, login, token refresh, logout, and the authenticated user profile endpoint. " +
+            "After a successful login, copy the `access_token` value and use it as the Bearer token for the `/me` endpoint.";
+        document.Info.Version = "v1";
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("AuthDb") ?? "Data Source=auth.db"));
@@ -34,11 +45,20 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Auth Identity Service API")
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+               .AddHttpAuthentication("Bearer", bearer => { bearer.Token = string.Empty; });
+    });
 }
 
 var accessTokens = new Dictionary<string, string>(StringComparer.Ordinal);
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "AuthIdentityService" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "AuthIdentityService" }))
+   .WithName("AuthHealth")
+   .WithSummary("Auth service health check")
+   .WithTags("System");
 
 app.MapPost("/api/v1/auth/register", async (LegacyRegistrationRequest payload, AuthDbContext db) =>
 {
@@ -89,7 +109,11 @@ app.MapPost("/api/v1/auth/register", async (LegacyRegistrationRequest payload, A
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/v1/auth/users/{user.Id}", new { id = user.Id, email = user.Email, role = user.Role });
-});
+})
+.WithName("Register")
+.WithSummary("Register a new user account")
+.WithDescription("Creates a new user. Role defaults to 'editor'. Includes optional legacy profile fields (name, gender, address, etc.).")
+.WithTags("Auth");
 
 app.MapPost("/api/v1/auth/login", async (LoginRequest payload, AuthDbContext db) =>
 {
@@ -122,7 +146,11 @@ app.MapPost("/api/v1/auth/login", async (LoginRequest payload, AuthDbContext db)
         token_type = "Bearer",
         user = new { id = user.Id, email = user.Email, role = user.Role }
     });
-});
+})
+.WithName("Login")
+.WithSummary("Login and receive tokens")
+.WithDescription("Authenticates a user and returns an `access_token` (in-memory, 15 min) and a `refresh_token` (persisted, 30 days). Dev seed: `admin@site.org` / `admin123`.")
+.WithTags("Auth");
 
 app.MapPost("/api/v1/auth/refresh", async (RefreshTokenRequest payload, AuthDbContext db) =>
 {
@@ -162,7 +190,11 @@ app.MapPost("/api/v1/auth/refresh", async (RefreshTokenRequest payload, AuthDbCo
         token_type = "Bearer",
         user = new { id = user.Id, email = user.Email, role = user.Role }
     });
-});
+})
+.WithName("RefreshToken")
+.WithSummary("Refresh an expired access token")
+.WithDescription("Rotates the refresh token and issues a new access token. The old refresh token is immediately revoked.")
+.WithTags("Auth");
 
 app.MapPost("/api/v1/auth/logout", async (RefreshTokenRequest payload, AuthDbContext db) =>
 {
@@ -176,7 +208,11 @@ app.MapPost("/api/v1/auth/logout", async (RefreshTokenRequest payload, AuthDbCon
     await db.SaveChangesAsync();
 
     return Results.NoContent();
-});
+})
+.WithName("Logout")
+.WithSummary("Logout and revoke refresh token")
+.WithDescription("Revokes the given refresh token. Returns 204 No Content on success.")
+.WithTags("Auth");
 
 app.MapGet("/api/v1/auth/me", async (HttpRequest request, AuthDbContext db) =>
 {
@@ -232,7 +268,11 @@ app.MapGet("/api/v1/auth/me", async (HttpRequest request, AuthDbContext db) =>
             user.SocialMediaLink
         }
     });
-});
+})
+.WithName("GetCurrentUser")
+.WithSummary("Get the authenticated user's profile")
+.WithDescription("Returns the full profile of the currently authenticated user. Requires `Authorization: Bearer <access_token>` obtained from the login endpoint.")
+.WithTags("Auth");
 
 app.Run();
 

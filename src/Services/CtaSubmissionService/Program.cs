@@ -2,9 +2,19 @@ using CtaSubmissionService.Contracts;
 using CtaSubmissionService.Data;
 using CtaSubmissionService.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info.Title = "CTA Submission Service API";
+        document.Info.Description = "Accepts and persists call-to-action form submissions (registration, contact, get-involved).";
+        document.Info.Version = "v1";
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddDbContext<CtaDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("CtaDb") ?? "Data Source=cta.db"));
@@ -20,13 +30,21 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("CTA Submission Service API")
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
 var allowedForms = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "registration", "contact", "footer-contact", "project-involved" };
 var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "join", "donate", "partnership", "get-involved", "contact" };
 var allowedLangs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "bn", "en" };
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "CtaSubmissionService" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "CtaSubmissionService" }))
+   .WithName("CtaHealth")
+   .WithSummary("CTA service health check")
+   .WithTags("System");
 
 app.MapPost("/api/v1/cta/submissions", async (CtaSubmissionRequest payload, CtaDbContext db) =>
 {
@@ -69,7 +87,11 @@ app.MapPost("/api/v1/cta/submissions", async (CtaSubmissionRequest payload, CtaD
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/v1/cta/submissions/{id}", new { id, status = "accepted", created_at = createdAt });
-});
+})
+.WithName("CreateCtaSubmission")
+.WithSummary("Submit a CTA form")
+.WithDescription("Accepts a call-to-action form submission. Valid formName values: registration, contact, footer-contact, project-involved. Valid ctaType values: join, donate, partnership, get-involved, contact.")
+.WithTags("CTA");
 
 app.Run();
 
