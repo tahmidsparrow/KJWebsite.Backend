@@ -1,8 +1,18 @@
+using Scalar.AspNetCore;
 using Yarp.ReverseProxy.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info.Title = "KJWebsite API Gateway";
+        document.Info.Description = "Entry point — routes /api/v1/content/*, /api/v1/cta/*, /api/v1/auth/* to their respective downstream services.";
+        document.Info.Version = "v1";
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddReverseProxy().LoadFromMemory(
 [
     new RouteConfig { RouteId = "content", ClusterId = "content", Match = new RouteMatch { Path = "/api/v1/content/{**catch-all}" } },
@@ -42,9 +52,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("KJWebsite API Gateway")
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "ApiGateway" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "ApiGateway" }))
+   .WithName("GatewayHealth")
+   .WithSummary("Gateway health check")
+   .WithTags("System");
 app.MapReverseProxy();
 
 app.Run();

@@ -1,13 +1,30 @@
+using Scalar.AspNetCore;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info.Title = "Content Service API";
+        document.Info.Description = "Serves projects and news items in multiple languages (en/bn). " +
+            "Public read endpoints are unauthenticated. Admin write endpoints require `Authorization: Bearer dev-admin-token`.";
+        document.Info.Version = "v1";
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Content Service API")
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+               .AddHttpAuthentication("Bearer", bearer => { bearer.Token = "dev-admin-token"; });
+    });
 }
 
 
@@ -20,10 +37,13 @@ var projects = new List<ProjectItem>
 var news = new List<NewsItem>
 {
     new("bauniabadh-mou", "bauniabadh-mou", "en", "MoU signed", "Summary", ["Paragraph 1"], "/img/blog/1.jpg", "February 25, 2017", DateTimeOffset.Parse("2017-02-25", CultureInfo.InvariantCulture), "published"),
-    new("bauniabadh-mou", "bauniabadh-mou", "bn", "সমঝোতা চুক্তি", "সারসংক্ষেপ", ["অনুচ্ছেদ ১"], "/img/blog/1.jpg", "ফেব্রুয়ারি ২৫, ২০১৭", DateTimeOffset.Parse("2017-02-25", CultureInfo.InvariantCulture), "published")
+    new("bauniabadh-mou", "bauniabadh-mou", "bn", "সমঝোতা চুক্তি", "সারসংক্ষেপ", ["অনুচ্ছেদ ১"], "/img/blog/1.jpg", "ফেব্রুয়ারি ২৫, ২০১৭", DateTimeOffset.Parse("2017-02-25", CultureInfo.InvariantCulture), "published")
 };
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "ContentService" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "ContentService" }))
+   .WithName("ContentHealth")
+   .WithSummary("Content service health check")
+   .WithTags("System");
 
 app.MapGet("/api/v1/content/projects", (string? lang, string? status) =>
 {
@@ -36,7 +56,11 @@ app.MapGet("/api/v1/content/projects", (string? lang, string? status) =>
 
     var filtered = projects.Where(p => p.Lang == normalizedLang && (normalizedStatus == "all" || p.Status == "active")).ToArray();
     return Results.Ok(new { items = filtered });
-});
+})
+.WithName("GetProjects")
+.WithSummary("List projects")
+.WithDescription("Returns projects filtered by language (`lang`: en/bn, default en) and status (`status`: active/all, default active).")
+.WithTags("Content");
 
 app.MapGet("/api/v1/content/projects/{id}", (string id, string? lang) =>
 {
@@ -45,7 +69,11 @@ app.MapGet("/api/v1/content/projects/{id}", (string id, string? lang) =>
     return item is null
         ? Results.NotFound(ApiError("NOT_FOUND", "Project not found."))
         : Results.Ok(item);
-});
+})
+.WithName("GetProjectById")
+.WithSummary("Get project by ID")
+.WithDescription("Returns a single project by slug ID in the requested language (`lang`: en/bn, default en).")
+.WithTags("Content");
 
 app.MapGet("/api/v1/content/news", (string? lang, int? limit, int? offset) =>
 {
@@ -62,7 +90,11 @@ app.MapGet("/api/v1/content/news", (string? lang, int? limit, int? offset) =>
     var paged = langRows.Skip(safeOffset).Take(safeLimit).ToArray();
 
     return Results.Ok(new { items = paged, total = langRows.Count, limit = safeLimit, offset = safeOffset });
-});
+})
+.WithName("GetNews")
+.WithSummary("List news articles (paginated)")
+.WithDescription("Returns paginated news articles. `lang`: en/bn (default en). `limit`: 1–100 (default 20). `offset`: default 0.")
+.WithTags("Content");
 
 app.MapGet("/api/v1/content/news/{id}", (string id, string? lang) =>
 {
@@ -71,7 +103,11 @@ app.MapGet("/api/v1/content/news/{id}", (string id, string? lang) =>
     return item is null
         ? Results.NotFound(ApiError("NOT_FOUND", "News item not found."))
         : Results.Ok(item);
-});
+})
+.WithName("GetNewsById")
+.WithSummary("Get news article by ID")
+.WithDescription("Returns a single news article by slug ID in the requested language (`lang`: en/bn, default en).")
+.WithTags("Content");
 
 app.MapPost("/api/v1/admin/content/projects", (HttpRequest request, ProjectUpsertRequest payload) =>
 {
@@ -102,7 +138,11 @@ app.MapPost("/api/v1/admin/content/projects", (HttpRequest request, ProjectUpser
     projects.AddRange(created);
 
     return Results.Created($"/api/v1/content/projects/{payload.Slug}", created.First());
-});
+})
+.WithName("CreateProject")
+.WithSummary("Create or replace a project")
+.WithDescription("Creates a project with all provided language translations. Replaces any existing project with the same slug. Requires `Authorization: Bearer dev-admin-token`.")
+.WithTags("Admin — Content");
 
 app.MapPut("/api/v1/admin/content/projects/{id}", (HttpRequest request, string id, ProjectUpsertRequest payload) =>
 {
@@ -124,7 +164,11 @@ app.MapPut("/api/v1/admin/content/projects/{id}", (HttpRequest request, string i
     projects.AddRange(updated);
 
     return Results.Ok(updated.First());
-});
+})
+.WithName("UpdateProject")
+.WithSummary("Update a project")
+.WithDescription("Replaces all translations for the given project. Requires `Authorization: Bearer dev-admin-token`.")
+.WithTags("Admin — Content");
 
 app.MapDelete("/api/v1/admin/content/projects/{id}", (HttpRequest request, string id) =>
 {
@@ -135,7 +179,11 @@ app.MapDelete("/api/v1/admin/content/projects/{id}", (HttpRequest request, strin
     return removed == 0
         ? Results.NotFound(ApiError("NOT_FOUND", "Project not found."))
         : Results.NoContent();
-});
+})
+.WithName("DeleteProject")
+.WithSummary("Delete a project")
+.WithDescription("Deletes all translations of the given project. Requires `Authorization: Bearer dev-admin-token`.")
+.WithTags("Admin — Content");
 
 app.MapPost("/api/v1/admin/content/news", (HttpRequest request, NewsUpsertRequest payload) =>
 {
@@ -163,7 +211,11 @@ app.MapPost("/api/v1/admin/content/news", (HttpRequest request, NewsUpsertReques
     news.AddRange(created);
 
     return Results.Created($"/api/v1/content/news/{payload.Slug}", created.First());
-});
+})
+.WithName("CreateNews")
+.WithSummary("Create or replace a news article")
+.WithDescription("Creates a news article with all provided language translations. Replaces any existing article with the same slug. Requires `Authorization: Bearer dev-admin-token`.")
+.WithTags("Admin — Content");
 
 app.MapPut("/api/v1/admin/content/news/{id}", (HttpRequest request, string id, NewsUpsertRequest payload) =>
 {
@@ -190,7 +242,11 @@ app.MapPut("/api/v1/admin/content/news/{id}", (HttpRequest request, string id, N
     news.AddRange(updated);
 
     return Results.Ok(updated.First());
-});
+})
+.WithName("UpdateNews")
+.WithSummary("Update a news article")
+.WithDescription("Replaces all translations for the given news article. Requires `Authorization: Bearer dev-admin-token`.")
+.WithTags("Admin — Content");
 
 app.MapDelete("/api/v1/admin/content/news/{id}", (HttpRequest request, string id) =>
 {
@@ -201,7 +257,11 @@ app.MapDelete("/api/v1/admin/content/news/{id}", (HttpRequest request, string id
     return removed == 0
         ? Results.NotFound(ApiError("NOT_FOUND", "News item not found."))
         : Results.NoContent();
-});
+})
+.WithName("DeleteNews")
+.WithSummary("Delete a news article")
+.WithDescription("Deletes all translations of the given news article. Requires `Authorization: Bearer dev-admin-token`.")
+.WithTags("Admin — Content");
 
 app.Run();
 
